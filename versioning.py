@@ -1,13 +1,10 @@
 import boto3
-import boto
-from boto.s3.connection import S3Connection
 from botocore.client import Config
 
 s3 = boto3.resource('s3',config=Config(signature_version='s3v4'))
-connect = boto.connect_s3()
-buckets = connect.get_all_buckets()
+bucketList = s3.buckets.all()
 
-for i in buckets:
-    bucket_versioning = s3.BucketVersioning(i.name)
+for bucket in bucketList:
+    bucket_versioning = s3.BucketVersioning(bucket.name)
     bucket_versioning.enable()
-    print i.name, 'versioning enabled'
+    print bucket.name, 'versioning enabled'

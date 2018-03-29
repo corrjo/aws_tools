@@ -1,0 +1,78 @@
+Parameters:
+  amiId:
+    Type: AWS::EC2::Image::Id
+
+  Keypair:
+    Type: AWS::EC2::KeyPair::KeyName
+
+  Vpc:
+    Type: AWS::EC2::VPC::Id
+
+  Subnet:
+    Type: AWS::EC2::Subnet::Id
+
+Resources:
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref amiId
+      InstanceType: r4.large
+      KeyName: !Ref Keypair
+      Monitoring: True
+      SecurityGroupIds:
+        - !Ref MySG
+      SubnetId: !Ref Subnet
+      IamInstanceProfile: !Ref Profile
+
+  MySG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: MySG
+      GroupName: !Sub MyTSG-${AWS::StackName}
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: -1
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: -1
+
+  Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref AdminRole
+
+  AdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-AllAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub ${AWS::StackName}-Admin
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                - "*"
+                Effect: "Allow"
+                Resource: "*"
+
+Outputs:
+  IP:
+    Value: !GetAtt Instance.PrivateIp
+    Description: Ip Address
